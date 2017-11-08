@@ -21,12 +21,14 @@
 
 #pragma once
 
+#include "tiled_global.h"
+
+#include <QHash>
 #include <QObject>
 
-#include "tiled_global.h"
-#include "templategroup.h"
-
 namespace Tiled {
+
+class ObjectTemplate;
 
 class TILEDSHARED_EXPORT TemplateManager : public QObject
 {
@@ -36,27 +38,18 @@ public:
     static TemplateManager *instance();
     static void deleteInstance();
 
-    TemplateGroup *findTemplateGroup(const QString &fileName);
-    TemplateGroup *loadTemplateGroup(const QString &fileName, QString *error);
-    const ObjectTemplate *findTemplate(const QString &fileName, unsigned templateId);
-
-    void setTemplateGroups(TemplateGroups templateGroups);
-    void addTemplateGroup(TemplateGroup *templateGroup);
+    ObjectTemplate *findObjectTemplate(const QString &fileName);
+    ObjectTemplate *loadObjectTemplate(const QString &fileName,
+                                       QString *error = nullptr);
 
 private:
     Q_DISABLE_COPY(TemplateManager)
 
     TemplateManager(QObject *parent = nullptr);
 
-    TemplateGroups mTemplateGroups;
+    QHash<QString, ObjectTemplate*> mObjectTemplates;
 
     static TemplateManager *mInstance;
 };
-
-inline void TemplateManager::setTemplateGroups(TemplateGroups templateGroups)
-{ mTemplateGroups = templateGroups; }
-
-inline void TemplateManager::addTemplateGroup(TemplateGroup *templateGroup)
-{ mTemplateGroups.append(templateGroup); }
 
 } // namespace Tiled::Internal

@@ -21,36 +21,13 @@
 
 #pragma once
 
-#include <QDialog>
-#include "objecttemplate.h"
-
-namespace Ui {
-class NewTemplateDialog;
-}
-
 namespace Tiled {
+
+class MapObject;
 
 namespace Internal {
 
-class NewTemplateDialog : public QDialog
-{
-    Q_OBJECT
-
-public:
-    explicit NewTemplateDialog(const QString &objectName, QWidget *parent = nullptr);
-    ~NewTemplateDialog();
-    static void newTemplateGroup();
-
-    void createTemplate(QString &name, int &index);
-
-private slots:
-    void updateOkButton();
-    void createGroup();
-
-private:
-    Ui::NewTemplateDialog *mUi;
-    ObjectTemplate mNewObjectTemplate;
-};
+void saveObjectTemplate(const MapObject *mapObject);
 
 } // namespace Internal
 } // namespace Tiled

@@ -20,7 +20,9 @@
  */
 
 #include "templatemanager.h"
-#include "templategroupformat.h"
+
+#include "objecttemplate.h"
+#include "objecttemplateformat.h"
 
 using namespace Tiled;
 
@@ -45,35 +47,21 @@ void TemplateManager::deleteInstance()
     mInstance = nullptr;
 }
 
-TemplateGroup *TemplateManager::findTemplateGroup(const QString &fileName)
+ObjectTemplate *TemplateManager::findObjectTemplate(const QString &fileName)
 {
-    for (auto *group : mTemplateGroups) {
-        if (group->fileName() == fileName)
-            return group;
+    return mObjectTemplates.value(fileName);
+}
+
+ObjectTemplate *TemplateManager::loadObjectTemplate(const QString &fileName, QString *error)
+{
+    ObjectTemplate *objectTemplate = findObjectTemplate(fileName);
+
+    if (!objectTemplate) {
+        objectTemplate = readObjectTemplate(fileName, error);
+
+        if (objectTemplate)
+            mObjectTemplates.insert(fileName, objectTemplate);
     }
 
-    return nullptr;
+    return objectTemplate;
 }
-
-TemplateGroup *TemplateManager::loadTemplateGroup(const QString &fileName, QString *error)
-{
-    TemplateGroup *templateGroup = findTemplateGroup(fileName);
-
-    if (!templateGroup) {
-        templateGroup = readTemplateGroup(fileName, error);
-        // This templateGroup is specifically read for a certian map and is not part of the templates model
-        if (templateGroup)
-            templateGroup->setEmbedded(false);
-    }
-
-    return templateGroup;
-}
-
-const ObjectTemplate *TemplateManager::findTemplate(const QString &fileName, unsigned templateId)
-{
-    TemplateGroup *group = findTemplateGroup(fileName);
-    if (!group)
-        return nullptr;
-    return group->findTemplate(templateId);;
-}
-

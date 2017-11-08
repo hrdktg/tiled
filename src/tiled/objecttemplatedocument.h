@@ -1,5 +1,5 @@
 /*
- * templategroupdocument.h
+ * objecttemplatedocument.h
  * Copyright 2017, Thorbjørn Lindeijer <thorbjorn@lindeijer.nl>
  * Copyright 2017, Mohamed Thabet <thabetx@gmail.com>
  *
@@ -30,67 +30,42 @@
 #pragma once
 
 #include "document.h"
-#include "templategroup.h"
+#include "objecttemplate.h"
 
 namespace Tiled {
 
-class TemplateGroupFormat;
+class ObjectTemplateFormat;
 
 namespace Internal {
 
 class MapDocument;
 
-class TemplateGroupDocument : public Document
+class ObjectTemplateDocument : public Document
 {
     Q_OBJECT
 
 public:
-    TemplateGroupDocument(TemplateGroup *templateGroup);
-    ~TemplateGroupDocument();
+    ObjectTemplateDocument(ObjectTemplate *objectTemplate);
+    ~ObjectTemplateDocument();
 
     bool save(const QString &fileName, QString *error = nullptr) override;
 
-    static TemplateGroupDocument *load(const QString &fileName,
-                                       QString *error = nullptr);
+    static ObjectTemplateDocument *load(const QString &fileName,
+                                        QString *error = nullptr);
 
     FileFormat *writerFormat() const override;
     QString displayName() const override;
-    void addTemplate(ObjectTemplate *objectTemplate);
 
-    TemplateGroup *templateGroup();
-
-private:
-    TemplateGroup *mTemplateGroup;
-};
-
-typedef QList<TemplateGroupDocument*> TemplateDocuments;
-
-inline TemplateGroup *TemplateGroupDocument::templateGroup()
-{ return mTemplateGroup; }
-
-class TemplateDocumentsSerializer
-{
-public:
-    enum Format {
-        Autodetect,
-        Xml,
-        Json
-    };
-
-    TemplateDocumentsSerializer(Format format = Autodetect);
-
-    bool writeTemplateDocuments(const QString &fileName,
-                                const TemplateDocuments &templateDocuments);
-
-    bool readTemplateDocuments(const QString &fileName,
-                               TemplateDocuments &templateDocuments);
-
-    QString errorString() const { return mError; }
+    ObjectTemplate *objectTemplate();
 
 private:
-    Format mFormat;
-    QString mError;
+    ObjectTemplate *mObjectTemplate;
 };
+
+typedef QList<ObjectTemplateDocument*> TemplateDocuments;
+
+inline ObjectTemplate *ObjectTemplateDocument::objectTemplate()
+{ return mObjectTemplate; }
 
 } // namespace Internal
 } // namespace Tiled

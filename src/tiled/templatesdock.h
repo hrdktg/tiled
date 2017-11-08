@@ -61,7 +61,6 @@ signals:
 
 private slots:
     void setSelectedTool(AbstractTool*tool);
-    void openTemplateGroup();
     void setTemplate(ObjectTemplate *objectTemplate);
 
     void undo();
@@ -77,8 +76,8 @@ private:
 
     TemplatesView *mTemplatesView;
 
-    QAction *mNewTemplateGroup;
-    QAction *mOpenTemplateGroup;
+//    QAction *mNewTemplateGroup;
+//    QAction *mOpenTemplateGroup;
     QAction *mUndoAction;
     QAction *mRedoAction;
 
@@ -98,8 +97,6 @@ class TemplatesView : public QTreeView
 public:
     QSize sizeHint() const override;
     TemplatesView(QWidget *parent = nullptr);
-
-    void applyTemplateGroups();
 
 signals:
     void currentTemplateChanged(ObjectTemplate *objectTemplate);

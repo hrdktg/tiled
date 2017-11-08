@@ -27,7 +27,6 @@
 
 #include "map.h"
 #include "objecttypes.h"
-#include "templategroupdocument.h"
 
 class QSettings;
 

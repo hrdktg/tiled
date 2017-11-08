@@ -320,11 +320,11 @@ QString JsonTilesetFormat::errorString() const
 }
 
 JsonTemplateGroupFormat::JsonTemplateGroupFormat(QObject *parent)
-    : Tiled::TemplateGroupFormat(parent)
+    : Tiled::ObjectTemplateFormat(parent)
 {
 }
 
-Tiled::TemplateGroup *JsonTemplateGroupFormat::read(const QString &fileName)
+Tiled::ObjectTemplate *JsonTemplateGroupFormat::read(const QString &fileName)
 {
     QFile file(fileName);
 
@@ -346,8 +346,8 @@ Tiled::TemplateGroup *JsonTemplateGroupFormat::read(const QString &fileName)
     }
 
     Tiled::VariantToMapConverter converter;
-    Tiled::TemplateGroup *templateGroup = converter.toTemplateGroup(variant,
-                                                                    QFileInfo(fileName).dir());
+    Tiled::ObjectTemplate *templateGroup = converter.toObjectTemplate(variant,
+                                                                      QFileInfo(fileName).dir());
 
     if (!templateGroup)
         mError = converter.errorString();
@@ -365,7 +365,7 @@ bool JsonTemplateGroupFormat::supportsFile(const QString &fileName) const
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             const QJsonObject object = QJsonDocument::fromJson(file.readAll()).object();
 
-            if (object.value(QLatin1String("type")).toString() == QLatin1String("templategroup"))
+            if (object.value(QLatin1String("type")).toString() == QLatin1String("template"))
                 return true;
         }
     }
@@ -373,7 +373,7 @@ bool JsonTemplateGroupFormat::supportsFile(const QString &fileName) const
     return false;
 }
 
-bool JsonTemplateGroupFormat::write(const Tiled::TemplateGroup *templateGroup, const QString &fileName)
+bool JsonTemplateGroupFormat::write(const Tiled::ObjectTemplate *objectTemplate, const QString &fileName)
 {
     Tiled::SaveFile file(fileName);
 
@@ -383,7 +383,7 @@ bool JsonTemplateGroupFormat::write(const Tiled::TemplateGroup *templateGroup, c
     }
 
     Tiled::MapToVariantConverter converter;
-    QVariant variant = converter.toVariant(*templateGroup, QFileInfo(fileName).dir());
+    QVariant variant = converter.toVariant(*objectTemplate, QFileInfo(fileName).dir());
 
     JsonWriter writer;
     writer.setAutoFormatting(true);

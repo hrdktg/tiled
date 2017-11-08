@@ -51,7 +51,7 @@ public:
     enum DocumentType {
         MapDocumentType,
         TilesetDocumentType,
-        TemplateGroupDocumentType
+        ObjectTemplateDocumentType
     };
 
     Document(DocumentType type,

@@ -51,8 +51,8 @@ using namespace Tiled::Internal;
 TemplatesDock::TemplatesDock(QWidget *parent):
     QDockWidget(parent),
     mTemplatesView(new TemplatesView),
-    mNewTemplateGroup(new QAction(this)),
-    mOpenTemplateGroup(new QAction(this)),
+//    mNewTemplateGroup(new QAction(this)),
+//    mOpenTemplateGroup(new QAction(this)),
     mUndoAction(new QAction(this)),
     mRedoAction(new QAction(this)),
     mDummyMapDocument(nullptr),
@@ -76,17 +76,18 @@ TemplatesDock::TemplatesDock(QWidget *parent):
     toolBar->setMovable(false);
     toolBar->setIconSize(Utils::smallIconSize());
 
-    mNewTemplateGroup->setIcon(QIcon(QLatin1String(":/images/16x16/document-new.png")));
-    Utils::setThemeIcon(mNewTemplateGroup, "document-new");
-    connect(mNewTemplateGroup, &QAction::triggered, this, [](){ NewTemplateDialog::newTemplateGroup(); });
+//    mNewTemplateGroup->setIcon(QIcon(QLatin1String(":/images/16x16/document-new.png")));
+//    Utils::setThemeIcon(mNewTemplateGroup, "document-new");
+//    connect(mNewTemplateGroup, &QAction::triggered, this, [](){ NewTemplateDialog::newTemplateGroup(); });
 
-    mOpenTemplateGroup->setIcon(QIcon(QLatin1String(":/images/16x16/document-open.png")));
-    Utils::setThemeIcon(mOpenTemplateGroup, "document-open");
-    connect(mOpenTemplateGroup, &QAction::triggered, this, &TemplatesDock::openTemplateGroup);
+//    mOpenTemplateGroup->setIcon(QIcon(QLatin1String(":/images/16x16/document-open.png")));
+//    Utils::setThemeIcon(mOpenTemplateGroup, "document-open");
+//    connect(mOpenTemplateGroup, &QAction::triggered, this, &TemplatesDock::openTemplateGroup);
+
     connect(this, &TemplatesDock::setTile, mToolManager, &ToolManager::setTile);
 
-    toolBar->addAction(mNewTemplateGroup);
-    toolBar->addAction(mOpenTemplateGroup);
+//    toolBar->addAction(mNewTemplateGroup);
+//    toolBar->addAction(mOpenTemplateGroup);
 
     mUndoAction->setIcon(QIcon(QLatin1String(":/images/16x16/edit-undo.png")));
     Utils::setThemeIcon(mUndoAction, "edit-undo");
@@ -146,13 +147,8 @@ TemplatesDock::TemplatesDock(QWidget *parent):
 
     TemplateDocuments templateDocuments;
 
-    TemplateDocumentsSerializer templateDocumentsSerializer;
-    templateDocumentsSerializer.readTemplateDocuments(documentsFileName, templateDocuments);
-
-    auto model = ObjectTemplateModel::instance();
-    model->setTemplateDocuments(templateDocuments);
-
-    mTemplatesView->setModel(model);
+    // todo: use a QFileSystemModel?
+    //mTemplatesView->setModel(model);
 
     mMapScene->setSelectedTool(mToolManager->selectedTool());
 
@@ -161,12 +157,6 @@ TemplatesDock::TemplatesDock(QWidget *parent):
 
     connect(mTemplatesView, &TemplatesView::currentTemplateChanged,
             this, &TemplatesDock::setTemplate);
-
-    connect(mTemplatesView->model(), &ObjectTemplateModel::dataChanged,
-            mTemplatesView, &TemplatesView::applyTemplateGroups);
-
-    connect(mTemplatesView->model(), &ObjectTemplateModel::rowsInserted,
-            mTemplatesView, &TemplatesView::applyTemplateGroups);
 
     connect(mTemplatesView, &TemplatesView::focusInEvent,
             this, &TemplatesDock::focusInEvent);
@@ -195,7 +185,7 @@ TemplatesDock::~TemplatesDock()
 
     delete mDummyMapDocument;
 
-    ObjectTemplateModel::deleteInstance();
+    //ObjectTemplateModel::deleteInstance();
 }
 
 void TemplatesDock::setSelectedTool(AbstractTool *tool)
@@ -203,43 +193,6 @@ void TemplatesDock::setSelectedTool(AbstractTool *tool)
     mMapScene->disableSelectedTool();
     mMapScene->setSelectedTool(tool);
     mMapScene->enableSelectedTool();
-}
-
-void TemplatesDock::openTemplateGroup()
-{
-    FormatHelper<TemplateGroupFormat> helper(FileFormat::ReadWrite);
-    QString filter = helper.filter();
-
-    Preferences *prefs = Preferences::instance();
-    QString suggestedFileName = prefs->lastPath(Preferences::TemplateDocumentsFile);
-    QString selectedFilter = TgxTemplateGroupFormat().nameFilter();
-
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open Template Group"),
-                                                    suggestedFileName,
-                                                    filter,
-                                                    &selectedFilter);
-
-    if (fileName.isEmpty())
-        return;
-
-    if (TemplateManager::instance()->findTemplateGroup(fileName)) {
-        QMessageBox::information(this, tr("Open Template Group"),
-                                 tr("This template group has been already opened."));
-        return;
-    }
-
-    auto document = TemplateGroupDocument::load(fileName);
-
-    if (!document) {
-        QMessageBox::warning(this, tr("Open Template Group"),
-                             tr("Couldn't open this template group."));
-        return;
-    }
-
-    ObjectTemplateModel::instance()->addDocument(document);
-
-    prefs->setLastPath(Preferences::TemplateDocumentsFile,
-                       QFileInfo(fileName).path());
 }
 
 void TemplatesDock::setTemplate(ObjectTemplate *objectTemplate)
@@ -323,15 +276,9 @@ void TemplatesDock::redo()
 
 void TemplatesDock::applyChanges()
 {
-    TemplateGroup *templateGroup = mObjectTemplate->templateGroup();
-
-    // Add the tileset of the new tile in case the operation was change tile
-    // TODO: only save used tilesets
-    if (auto tileset = mObject->cell().tileset())
-        templateGroup->addTileset(tileset->sharedPointer());
-
     mObjectTemplate->setObject(mObject);
-    ObjectTemplateModel::instance()->save(templateGroup);
+    // todo: save the object template
+    //ObjectTemplateModel::instance()->save(templateGroup);
 
     mUndoAction->setEnabled(mDummyMapDocument->undoStack()->canUndo());
     mRedoAction->setEnabled(mDummyMapDocument->undoStack()->canRedo());
@@ -357,8 +304,8 @@ void TemplatesDock::focusOutEvent(QFocusEvent *event)
 void TemplatesDock::retranslateUi()
 {
     setWindowTitle(tr("Templates"));
-    mNewTemplateGroup->setText(tr("New Template Group"));
-    mOpenTemplateGroup->setText(tr("Open Template Group"));
+//    mNewTemplateGroup->setText(tr("New Template Group"));
+//    mOpenTemplateGroup->setText(tr("Open Template Group"));
 }
 
 TemplatesView::TemplatesView(QWidget *parent)
@@ -378,28 +325,6 @@ TemplatesView::TemplatesView(QWidget *parent)
     connect(mActionSelectAllInstances, &QAction::triggered, this, &TemplatesView::selectAllInstances);
 }
 
-void TemplatesView::applyTemplateGroups()
-{
-    auto model = ObjectTemplateModel::instance();
-    auto templateDocuments = model->templateDocuments();
-
-    Preferences *prefs = Preferences::instance();
-
-    QString templateDocumentsFile = prefs->templateDocumentsFile();
-    QDir templateDocumentsDir = QFileInfo(templateDocumentsFile).dir();
-
-    if (!templateDocumentsDir.exists())
-        templateDocumentsDir.mkpath(QLatin1String("."));
-
-    TemplateDocumentsSerializer serializer;
-    if (!serializer.writeTemplateDocuments(templateDocumentsFile, templateDocuments)) {
-        QMessageBox::critical(this, tr("Error Writing Template Groups"),
-                              tr("Error writing to %1:\n%2")
-                              .arg(prefs->templateDocumentsFile(),
-                                   serializer.errorString()));
-    }
-}
-
 void TemplatesView::contextMenuEvent(QContextMenuEvent *event)
 {
     const QModelIndex index = indexAt(event->pos());
@@ -407,14 +332,15 @@ void TemplatesView::contextMenuEvent(QContextMenuEvent *event)
     if (!index.isValid())
         return;
 
-    QMenu menu;
+    // todo: Implement based on QFileSystemModel
+//    QMenu menu;
 
-    auto model = ObjectTemplateModel::instance();
+//    auto model = ObjectTemplateModel::instance();
 
-    if ((mObjectTemplate = model->toObjectTemplate(index))) {
-        menu.addAction(mActionSelectAllInstances);
-        menu.exec(event->globalPos());
-    }
+//    if ((mObjectTemplate = model->toObjectTemplate(index))) {
+//        menu.addAction(mActionSelectAllInstances);
+//        menu.exec(event->globalPos());
+//    }
 }
 
 QSize TemplatesView::sizeHint() const
@@ -425,14 +351,15 @@ QSize TemplatesView::sizeHint() const
 void TemplatesView::updateSelection(const QItemSelection &selected, const QItemSelection &deselected)
 {
     Q_UNUSED(deselected);
-    auto model = ObjectTemplateModel::instance();
+    // todo: Implement based on QFileSystemModel
+//    auto model = ObjectTemplateModel::instance();
 
-    QModelIndexList indexes = selected.indexes();
-    if (indexes.isEmpty())
-        return;
+//    QModelIndexList indexes = selected.indexes();
+//    if (indexes.isEmpty())
+//        return;
 
-    ObjectTemplate *objectTemplate = model->toObjectTemplate(indexes.first());
-    emit currentTemplateChanged(objectTemplate);
+//    ObjectTemplate *objectTemplate = model->toObjectTemplate(indexes.first());
+//    emit currentTemplateChanged(objectTemplate);
 }
 
 void TemplatesView::selectAllInstances()

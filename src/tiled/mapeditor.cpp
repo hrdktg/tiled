@@ -48,6 +48,7 @@
 #include "minimapdock.h"
 #include "newtilesetdialog.h"
 #include "objectsdock.h"
+#include "objecttemplate.h"
 #include "templatesdock.h"
 #include "objectselectiontool.h"
 #include "painttilelayer.h"

@@ -24,6 +24,7 @@
 #include "documentmanager.h"
 #include "map.h"
 #include "mapdocument.h"
+#include "objectgroup.h"
 #include "objecttemplatemodel.h"
 #include "preferences.h"
 #include "replacetemplate.h"
@@ -64,8 +65,8 @@ QString BrokenLink::filePath() const
         return _tileset->fileName();
     case TilesetTileImageSource:
         return _tile->imageSource().toString(QUrl::PreferLocalFile);
-    case TemplateGroupReference:
-        return _templateGroup->fileName();
+    case ObjectTemplateReference:
+        return _objectTemplate->fileName();
     }
 
     return QString();
@@ -79,16 +80,16 @@ Tileset *BrokenLink::tileset() const
         return _tileset;
     case TilesetTileImageSource:
         return _tile->tileset();
-    case TemplateGroupReference:
+    case ObjectTemplateReference:
         return nullptr;
     }
 
     return nullptr;
 }
 
-TemplateGroup *BrokenLink::templateGroup() const
+const ObjectTemplate *BrokenLink::objectTemplate() const
 {
-    return type == TemplateGroupReference ? _templateGroup : nullptr;
+    return type == ObjectTemplateReference ? _objectTemplate : nullptr;
 }
 
 BrokenLinksModel::BrokenLinksModel(QObject *parent)
@@ -121,8 +122,8 @@ void BrokenLinksModel::setDocument(Document *document)
             connect(mapDocument, &MapDocument::tilesetRemoved,
                     this, &BrokenLinksModel::tilesetRemoved);
 
-            connect(mapDocument, &MapDocument::templateGroupReplaced,
-                    this, &BrokenLinksModel::templateGroupReplaced);
+            connect(mapDocument, &MapDocument::objectTemplateReplaced,
+                    this, &BrokenLinksModel::objectTemplateReplaced);
 
             for (const SharedTileset &tileset : mapDocument->map()->tilesets())
                 connectToTileset(tileset);
@@ -177,13 +178,25 @@ void BrokenLinksModel::refresh()
                 }
             }
 
-            for (TemplateGroup *templateGroup : mapDocument->map()->templateGroups()) {
-                if (!templateGroup->fileName().isEmpty() && !templateGroup->loaded()) {
-                    BrokenLink link;
-                    link.type = TemplateGroupReference;
-                    link._templateGroup = templateGroup;
-                    mBrokenLinks.append(link);
+            QSet<const ObjectTemplate*> brokenTemplates;
+
+            LayerIterator it(mapDocument->map());
+            while (Layer *layer = it.next()) {
+                if (ObjectGroup *objectGroup = layer->asObjectGroup()) {
+                    for (MapObject *mapObject : *objectGroup) {
+                        if (const ObjectTemplate *objectTemplate = mapObject->objectTemplate()) {
+                            if (!objectTemplate->object())
+                                brokenTemplates.insert(objectTemplate);
+                        }
+                    }
                 }
+            }
+
+            for (const ObjectTemplate *objectTemplate : brokenTemplates) {
+                BrokenLink link;
+                link.type = ObjectTemplateReference;
+                link._objectTemplate = objectTemplate;
+                mBrokenLinks.append(link);
             }
         } else if (auto tilesetDocument = qobject_cast<TilesetDocument*>(mDocument)) {
             processTileset(tilesetDocument->tileset());
@@ -226,8 +239,8 @@ QVariant BrokenLinksModel::data(const QModelIndex &index, int role) const
                 return tr("Tileset image");
             case TilesetTileImageSource:
                 return tr("Tile image");
-            case TemplateGroupReference:
-                return tr("Template group");
+            case ObjectTemplateReference:
+                return tr("Template");
             }
             break;
         }
@@ -309,11 +322,8 @@ void BrokenLinksModel::tilesetReplaced(int index, Tileset *newTileset, Tileset *
     refresh();
 }
 
-void BrokenLinksModel::templateGroupReplaced(int index, TemplateGroup *templateGroup, TemplateGroup *oldTemplateGroup)
+void BrokenLinksModel::objectTemplateReplaced()
 {
-    Q_UNUSED(index)
-    Q_UNUSED(templateGroup)
-    Q_UNUSED(oldTemplateGroup)
     refresh();
 }
 
@@ -454,7 +464,7 @@ void BrokenLinksWidget::selectionChanged()
             else
                 mLocateButton->setText(tr("Open Tileset..."));
             break;
-        case Tiled::Internal::TemplateGroupReference:
+        case Tiled::Internal::ObjectTemplateReference:
             mLocateButton->setText(tr("Locate File..."));
         }
     }
@@ -480,7 +490,7 @@ void BrokenLinksWidget::tryFixLinks(const QVector<BrokenLink> &links)
                 return;
             }
         }
-        if (link.type == TemplateGroupReference) {
+        if (link.type == ObjectTemplateReference) {
             return;
         }
     }
@@ -586,11 +596,10 @@ void BrokenLinksWidget::tryFixLink(const BrokenLink &link)
         if (fileName.isEmpty())
             return;
 
-        QString error;
-
         // It could be, that we have already loaded this tileset.
         SharedTileset newTileset = TilesetManager::instance()->findTileset(fileName);
         if (!newTileset || newTileset->status() == LoadingError) {
+            QString error;
             newTileset = Tiled::readTileset(fileName, &error);
 
             if (!newTileset) {
@@ -606,38 +615,33 @@ void BrokenLinksWidget::tryFixLink(const BrokenLink &link)
 
         prefs->setLastPath(Preferences::ExternalTileset,
                            QFileInfo(fileName).path());
-    } else if (link.type == TemplateGroupReference) {
+    } else if (link.type == ObjectTemplateReference) {
         const QString allFilesFilter = tr("All Files (*)");
 
         Preferences *prefs = Preferences::instance();
         QString start = prefs->lastPath(Preferences::TemplateDocumentsFile);
 
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Locate Template Group"),
+        QString fileName = QFileDialog::getOpenFileName(this, tr("Locate Object Template"),
                                                         start,
                                                         allFilesFilter);
 
         if (fileName.isEmpty())
             return;
 
-        TemplateGroup *newTemplateGroup = TemplateManager::instance()->findTemplateGroup(fileName);
+        ObjectTemplate *newObjectTemplate = TemplateManager::instance()->findObjectTemplate(fileName);
 
-        QString error;
+        if (!newObjectTemplate || !newObjectTemplate->object()) {
+            QString error;
+            newObjectTemplate = TemplateManager::instance()->loadObjectTemplate(fileName, &error);
 
-        if (!newTemplateGroup || !newTemplateGroup->loaded()) {
-            newTemplateGroup = Tiled::readTemplateGroup(fileName, &error);
-
-            if (!newTemplateGroup) {
-                QMessageBox::critical(window(), tr("Error Reading Template Group"), error);
+            if (!newObjectTemplate) {
+                QMessageBox::critical(window(), tr("Error Reading Object Template"), error);
                 return;
             }
-
-            ObjectTemplateModel::instance()->addTemplateGroup(newTemplateGroup);
         }
 
         MapDocument *mapDocument = static_cast<MapDocument*>(document);
-        int index = mapDocument->map()->templateGroups().indexOf(link._templateGroup);
-        if (index != -1)
-            document->undoStack()->push(new ReplaceTemplate(mapDocument, index, newTemplateGroup));
+        document->undoStack()->push(new ReplaceTemplate(mapDocument, link.objectTemplate(), newObjectTemplate));
     }
 }
 
@@ -679,11 +683,10 @@ bool BrokenLinksWidget::tryFixLink(const BrokenLink &link, const QString &newFil
         }
 
     } else if (link.type == MapTilesetReference) {
-        QString error;
-
         // It could be, that we have already loaded this tileset.
         SharedTileset newTileset = TilesetManager::instance()->findTileset(newFilePath);
         if (!newTileset || newTileset->status() == LoadingError) {
+            QString error;
             newTileset = Tiled::readTileset(newFilePath, &error);
 
             if (!newTileset) {

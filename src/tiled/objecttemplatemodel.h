@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "templategroupdocument.h"
+#include "objecttemplatedocument.h"
 
 #include <QAbstractItemModel>
 
@@ -30,6 +30,8 @@ namespace Tiled {
 class MapObject;
 
 namespace Internal {
+
+#if 0
 
 class ObjectTemplateModel : public QAbstractItemModel
 {
@@ -50,12 +52,11 @@ public:
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
-    bool addNewDocument(TemplateGroupDocument *document);
-    bool addDocument(TemplateGroupDocument *document);
-    bool addTemplateGroup(TemplateGroup *templateGroup);
+    bool addNewDocument(ObjectTemplateDocument *document);
+    bool addDocument(ObjectTemplateDocument *document);
     ObjectTemplate *saveObjectToDocument(MapObject *object, QString name, int documentIndex);
     ObjectTemplate *toObjectTemplate(const QModelIndex &index) const;
-    void save(const TemplateGroup *templateGroup) const;
+    void save(const ObjectTemplate *objectTemplate) const;
 
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QStringList mimeTypes() const override;
@@ -68,11 +69,12 @@ private:
     static ObjectTemplateModel *mInstance;
 
     TemplateDocuments mTemplateDocuments;
-    TemplateGroup *toTemplateGroup(const QModelIndex &index) const;
 };
 
 inline const TemplateDocuments &ObjectTemplateModel::templateDocuments() const
 { return mTemplateDocuments; }
+
+#endif
 
 } // namespace Internal
 } // namespace Tiled

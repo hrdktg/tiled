@@ -1,5 +1,5 @@
 /*
- * objecttemplate.cpp
+ * objecttemplatedocument.cpp
  * Copyright 2017, Thorbjørn Lindeijer <thorbjorn@lindeijer.nl>
  * Copyright 2017, Mohamed Thabet <thabetx@gmail.com>
  *
@@ -27,47 +27,66 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "objecttemplate.h"
+#include "objecttemplatedocument.h"
 
 #include "objecttemplateformat.h"
-#include "tilesetmanager.h"
+#include "tmxmapformat.h"
+#include "savefile.h"
 
-namespace Tiled {
+#include <QCoreApplication>
+#include <QDir>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
-ObjectTemplate::ObjectTemplate()
-    : ObjectTemplate(QString())
+using namespace Tiled;
+using namespace Tiled::Internal;
+
+ObjectTemplateDocument::ObjectTemplateDocument(ObjectTemplate *objectTemplate)
+    : Document(ObjectTemplateDocumentType, objectTemplate->fileName())
+    , mObjectTemplate(objectTemplate)
+{
+    mFileName = mObjectTemplate->fileName();
+}
+
+ObjectTemplateDocument::~ObjectTemplateDocument()
 {
 }
 
-ObjectTemplate::ObjectTemplate(const QString &fileName)
-    : Object(ObjectTemplateType)
-    , mFileName(fileName)
-    , mObject(nullptr)
+bool ObjectTemplateDocument::save(const QString &fileName, QString *error)
 {
+    auto format = mObjectTemplate->format();
+
+    if (!format->write(mObjectTemplate, fileName)) {
+        if (error)
+            *error = format->errorString();
+        return false;
+    }
+
+    return true;
 }
 
-void ObjectTemplate::setObject(const MapObject *object)
+ObjectTemplateDocument *ObjectTemplateDocument::load(const QString &fileName,
+                                                     QString *error)
 {
-    if (Tileset *tileset = object->cell().tileset())
-        TilesetManager::instance()->addReference(tileset->sharedPointer());
+    ObjectTemplate *objectTemplate = readObjectTemplate(fileName, error);
 
-    if (mObject)
-        if (Tileset *tileset = mObject->cell().tileset())
-            TilesetManager::instance()->removeReference(tileset->sharedPointer());
+    if (!objectTemplate)
+        return nullptr;
 
-    delete mObject;
-    mObject = object->clone();
-    mObject->markAsTemplateBase();
+    return new ObjectTemplateDocument(objectTemplate);
 }
 
-void ObjectTemplate::setFormat(ObjectTemplateFormat *format)
+FileFormat *ObjectTemplateDocument::writerFormat() const
 {
-    mFormat = format;
+    return mObjectTemplate->format();
 }
 
-ObjectTemplateFormat *ObjectTemplate::format() const
+QString ObjectTemplateDocument::displayName() const
 {
-    return mFormat;
-}
+    QString displayName = mObjectTemplate->object()->name();
 
-} // namespace Tiled
+    if (displayName.isEmpty())
+        displayName = mFileName;
+
+    return displayName;
+}

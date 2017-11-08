@@ -206,16 +206,8 @@ void AbstractObjectTool::resetTileSize()
 
 void AbstractObjectTool::saveSelectedObject()
 {
-    QString name;
-    int groupIndex;
-
     auto object = mapDocument()->selectedObjects().first();
-
-    NewTemplateDialog newTemplateDialog(object->name());
-    newTemplateDialog.createTemplate(name, groupIndex);
-
-    if (!name.isEmpty())
-        mapDocument()->saveSelectedObject(name, groupIndex);
+    saveObjectTemplate(object);
 }
 
 void AbstractObjectTool::detachSelectedObjects()

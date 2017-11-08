@@ -21,15 +21,15 @@
 
 #include "objecttemplatemodel.h"
 
-#include "templategroup.h"
+#include "objecttemplate.h"
 #include "templatemanager.h"
-#include "tmxmapformat.h"
 
 #include <QFileInfo>
-#include <QtCore>
 
 namespace Tiled {
 namespace Internal {
+
+#if 0
 
 ObjectTemplateModel *ObjectTemplateModel::mInstance;
 
@@ -77,7 +77,7 @@ QModelIndex ObjectTemplateModel::index(int row, int column,
     if (!parent.isValid()) {
         if (row < mTemplateDocuments.size() && row >= 0)
             return createIndex(row, column, mTemplateDocuments.at(row)->templateGroup());
-    } else if (TemplateGroup *templateGroup = toTemplateGroup(parent)) {
+    } else if (TemplateGroup *templateGroup = toObjectTemplate(parent)) {
         if (row < templateGroup->templateCount() && row >= 0)
             return createIndex(row, column, templateGroup->templateAt(row));
     }
@@ -106,7 +106,7 @@ int ObjectTemplateModel::rowCount(const QModelIndex &parent) const
     if (!parent.isValid())
         return mTemplateDocuments.size();
 
-    if (TemplateGroup *templateGroup = toTemplateGroup(parent))
+    if (TemplateGroup *templateGroup = toObjectTemplate(parent))
         return templateGroup->templateCount();
 
     return 0;
@@ -121,7 +121,7 @@ int ObjectTemplateModel::columnCount(const QModelIndex &parent) const
 QVariant ObjectTemplateModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DisplayRole) {
-        if (TemplateGroup *templateGroup = toTemplateGroup(index))
+        if (TemplateGroup *templateGroup = toObjectTemplate(index))
             return templateGroup->name();
         else if (ObjectTemplate *objectTemplate = toObjectTemplate(index))
             return objectTemplate->name();
@@ -130,7 +130,7 @@ QVariant ObjectTemplateModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-bool ObjectTemplateModel::addNewDocument(TemplateGroupDocument *document)
+bool ObjectTemplateModel::addNewDocument(ObjectTemplateDocument *document)
 {
     // Remove old document if the new document overwrites it
     QString fileName = document->fileName();
@@ -149,7 +149,7 @@ bool ObjectTemplateModel::addNewDocument(TemplateGroupDocument *document)
     endInsertRows();
 
     QList<TemplateGroup*> groups;
-    for (TemplateGroupDocument *doc : mTemplateDocuments)
+    for (ObjectTemplateDocument *doc : mTemplateDocuments)
         groups.append(doc->templateGroup());
 
     TemplateManager::instance()->setTemplateGroups(groups);
@@ -157,30 +157,13 @@ bool ObjectTemplateModel::addNewDocument(TemplateGroupDocument *document)
     return true;
 }
 
-bool ObjectTemplateModel::addDocument(TemplateGroupDocument *document)
+bool ObjectTemplateModel::addDocument(ObjectTemplateDocument *document)
 {
     Q_ASSERT(document);
 
     for (auto templateDocument : mTemplateDocuments)
         if (document->fileName() == templateDocument->fileName())
             return false;
-
-    beginInsertRows(QModelIndex(), mTemplateDocuments.size(), mTemplateDocuments.size());
-    mTemplateDocuments.append(document);
-    endInsertRows();
-
-    TemplateManager::instance()->addTemplateGroup(document->templateGroup());
-
-    return true;
-}
-
-bool ObjectTemplateModel::addTemplateGroup(TemplateGroup *templateGroup)
-{
-    for (auto templateDocument : mTemplateDocuments)
-        if (templateDocument->fileName() == templateGroup->fileName())
-            return false;
-
-    auto document = new TemplateGroupDocument(templateGroup);
 
     beginInsertRows(QModelIndex(), mTemplateDocuments.size(), mTemplateDocuments.size());
     mTemplateDocuments.append(document);
@@ -227,26 +210,14 @@ ObjectTemplate *ObjectTemplateModel::toObjectTemplate(const QModelIndex &index) 
     return nullptr;
 }
 
-void ObjectTemplateModel::save(const TemplateGroup *templateGroup) const
+void ObjectTemplateModel::save(const ObjectTemplate *objectTemplate) const
 {
     for (auto document : mTemplateDocuments) {
-        if (document->templateGroup() == templateGroup) {
+        if (document->objectTemplate() == objectTemplate) {
             document->save(document->fileName());
             break;
         }
     }
-}
-
-TemplateGroup *ObjectTemplateModel::toTemplateGroup(const QModelIndex &index) const
-{
-    if (!index.isValid())
-        return nullptr;
-
-    Object *object = static_cast<Object*>(index.internalPointer());
-    if (object->typeId() == Object::TemplateGroupType)
-        return static_cast<TemplateGroup*>(object);
-
-    return nullptr;
 }
 
 Qt::ItemFlags ObjectTemplateModel::flags(const QModelIndex &index) const
@@ -283,6 +254,8 @@ QMimeData *ObjectTemplateModel::mimeData(const QModelIndexList &indexes) const
     mimeData->setData(QLatin1String(TEMPLATES_MIMETYPE), encodedData);
     return mimeData;
 }
+
+#endif
 
 } // namespace Internal
 } // namespace Tiled

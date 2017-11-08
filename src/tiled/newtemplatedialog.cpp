@@ -24,78 +24,28 @@
 #include "preferences.h"
 #include "templatemanager.h"
 #include "tmxmapformat.h"
-#include "ui_newtemplatedialog.h"
 
+#include <QCoreApplication>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QPushButton>
 
-using namespace Tiled;
-using namespace Tiled::Internal;
+namespace Tiled {
+namespace Internal {
 
-NewTemplateDialog::NewTemplateDialog(const QString &objectName, QWidget *parent) :
-    QDialog(parent),
-    mUi(new Ui::NewTemplateDialog)
+void saveObjectTemplate(const MapObject *mapObject)
 {
-    mUi->setupUi(this);
-
-    mUi->templateName->setText(objectName);
-
-    connect(mUi->createGroupButton, &QPushButton::pressed,
-            this, &NewTemplateDialog::createGroup);
-
-    auto model = ObjectTemplateModel::instance();
-    mUi->groupsComboBox->setModel(model);
-
-    connect(mUi->templateName, &QLineEdit::textChanged,
-            this, &NewTemplateDialog::updateOkButton);
-
-    updateOkButton();
-}
-
-NewTemplateDialog::~NewTemplateDialog()
-{
-    delete mUi;
-}
-
-void NewTemplateDialog::createTemplate(QString &name, int &index)
-{
-    if (exec() != QDialog::Accepted)
-        return;
-
-    name = mUi->templateName->text();
-    index = mUi->groupsComboBox->currentIndex();
-    accept();
-}
-
-void NewTemplateDialog::updateOkButton()
-{
-    QPushButton *okButton = mUi->buttonBox->button(QDialogButtonBox::Ok);
-
-    bool noTemplateName = mUi->templateName->text().isEmpty();
-    int index = mUi->groupsComboBox->currentIndex();
-
-    okButton->setDisabled(noTemplateName || index == -1);
-}
-
-void NewTemplateDialog::createGroup()
-{
-    newTemplateGroup();
-    mUi->groupsComboBox->setCurrentIndex(mUi->groupsComboBox->count() - 1);
-    updateOkButton();
-}
-
-void NewTemplateDialog::newTemplateGroup()
-{
-    FormatHelper<TemplateGroupFormat> helper(FileFormat::ReadWrite);
+    FormatHelper<ObjectTemplateFormat> helper(FileFormat::ReadWrite);
     QString filter = helper.filter();
-    QString selectedFilter = TgxTemplateGroupFormat().nameFilter();
+    QString selectedFilter = XmlObjectTemplateFormat().nameFilter();
 
     Preferences *prefs = Preferences::instance();
     QString suggestedFileName = prefs->lastPath(Preferences::TemplateDocumentsFile);
-    suggestedFileName += tr("/untitled.tgx");
+    // todo: base suggested file name on the name of the object, when non-empty
+    suggestedFileName += QCoreApplication::translate("Tiled::Internal::MainWindow", "untitled");
+    suggestedFileName += QLatin1String(".tx");
 
-    QString fileName = QFileDialog::getSaveFileName(nullptr, tr("Save File"),
+    QString fileName = QFileDialog::getSaveFileName(nullptr, QCoreApplication::translate("Tiled::Internal::MainWindow", "Save Template"),
                                                     suggestedFileName,
                                                     filter,
                                                     &selectedFilter);
@@ -103,24 +53,27 @@ void NewTemplateDialog::newTemplateGroup()
     if (fileName.isEmpty())
         return;
 
-    auto templateGroup = new TemplateGroup();
-    templateGroup->setName(QFileInfo(fileName).baseName());
-    templateGroup->setFileName(fileName);
-    QScopedPointer<TemplateGroupDocument>
-        templateGroupDocument(new TemplateGroupDocument(templateGroup));
+    ObjectTemplateFormat *format = helper.formatByNameFilter(selectedFilter);
 
-    TemplateGroupFormat *format = helper.formatByNameFilter(selectedFilter);
-    templateGroup->setFormat(format);
+    QScopedPointer<ObjectTemplate> objectTemplate(new ObjectTemplate(fileName));
+    objectTemplate->setFormat(format);
+    objectTemplate->setObject(mapObject);
+
+    QScopedPointer<ObjectTemplateDocument>
+        objectTemplateDocument(new ObjectTemplateDocument(objectTemplate.data()));
 
     QString error;
-    if (!templateGroupDocument->save(fileName, &error)) {
-        QMessageBox::critical(nullptr, tr("Error Creating Template Group"), error);
+    if (!objectTemplateDocument->save(fileName, &error)) {
+        QMessageBox::critical(nullptr, QCoreApplication::translate("Tiled::Internal::MainWindow", "Error Saving Template"), error);
         return;
     }
 
-    auto model = ObjectTemplateModel::instance();
-    model->addNewDocument(templateGroupDocument.take());
+//    auto model = ObjectTemplateModel::instance();
+//    model->addNewDocument(ObjectTemplateDocument.take());
 
     prefs->setLastPath(Preferences::TemplateDocumentsFile,
                        QFileInfo(fileName).path());
 }
+
+} // namespace Internal
+} // namespace Tiled

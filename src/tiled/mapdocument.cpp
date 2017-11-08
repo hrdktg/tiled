@@ -55,8 +55,6 @@
 #include "resizetilelayer.h"
 #include "rotatemapobject.h"
 #include "staggeredrenderer.h"
-#include "templategroup.h"
-#include "templategroupdocument.h"
 #include "terrain.h"
 #include "tile.h"
 #include "tilelayer.h"
@@ -124,25 +122,24 @@ MapDocument::~MapDocument()
     TilesetManager *tilesetManager = TilesetManager::instance();
     tilesetManager->removeReferences(mMap->tilesets());
 
-    qDeleteAll(mNonEmbeddedTemplateGroups);
     delete mRenderer;
     delete mMap;
 }
 
-void MapDocument::saveSelectedObject(const QString &name, int groupIndex)
+void MapDocument::saveSelectedObject(const QString &name)
 {
     if (mSelectedObjects.size() != 1)
         return;
 
-    ObjectTemplateModel* model = ObjectTemplateModel::instance();
-    MapObject *object = mSelectedObjects.first();
+//    ObjectTemplateModel* model = ObjectTemplateModel::instance();
+//    MapObject *object = mSelectedObjects.first();
 
-    if (ObjectTemplate *objectTemplate = model->saveObjectToDocument(object, name, groupIndex)) {
-        // Convert the saved object into an instance and clear the changed properties flags
-        object->setTemplateRef({objectTemplate->templateGroup(), objectTemplate->id()});
-        object->setChangedProperties(0);
-        emit objectsChanged(mSelectedObjects);
-    }
+//    if (ObjectTemplate *objectTemplate = model->saveObjectToDocument(object, name)) {
+//        // Convert the saved object into an instance and clear the changed properties flags
+//        object->setObjectTemplate(objectTemplate);
+//        object->setChangedProperties(0);
+//        emit objectsChanged(mSelectedObjects);
+//    }
 }
 
 bool MapDocument::save(const QString &fileName, QString *error)
@@ -678,17 +675,14 @@ SharedTileset MapDocument::replaceTileset(int index, const SharedTileset &tilese
     return oldTileset;
 }
 
-TemplateGroup *MapDocument::replaceTemplateGroup(int index, TemplateGroup *templateGroup)
+void MapDocument::replaceObjectTemplate(const ObjectTemplate *oldObjectTemplate,
+                                        const ObjectTemplate *newObjectTemplate)
 {
-    TemplateGroup *oldTemplateGroup = mMap->templateGroups().at(index);
-    auto changedObjects = mMap->replaceTemplateGroup(oldTemplateGroup, templateGroup);
+    auto changedObjects = mMap->replaceObjectTemplate(oldObjectTemplate, newObjectTemplate);
 
     // Update the objects in the map scene
     emit objectsChanged(changedObjects);
-
-    emit templateGroupReplaced(index, templateGroup, oldTemplateGroup);
-
-    return oldTemplateGroup;
+    emit objectTemplateReplaced(newObjectTemplate, oldObjectTemplate);
 }
 
 void MapDocument::setSelectedArea(const QRegion &selection)
