@@ -722,8 +722,10 @@ void MapWriterPrivate::writeObject(QXmlStreamWriter &w,
         w.writeAttribute(QLatin1String("id"), QString::number(id));
 
     if (const ObjectTemplate *objectTemplate = mapObject.objectTemplate()) {
-        QString relativeFileName = mMapDir.relativeFilePath(objectTemplate->fileName());
-        w.writeAttribute(QLatin1String("template"), relativeFileName);
+        QString fileName = objectTemplate->fileName();
+        if (!mUseAbsolutePaths)
+            fileName = mMapDir.relativeFilePath(fileName);
+        w.writeAttribute(QLatin1String("template"), fileName);
     }
 
     if (shouldWrite(!name.isEmpty(), isTemplateInstance, mapObject.propertyChanged(MapObject::NameProperty)))

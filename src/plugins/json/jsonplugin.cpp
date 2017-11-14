@@ -40,7 +40,7 @@ void JsonPlugin::initialize()
     addObject(new JsonMapFormat(JsonMapFormat::Json, this));
     addObject(new JsonMapFormat(JsonMapFormat::JavaScript, this));
     addObject(new JsonTilesetFormat(this));
-    addObject(new JsonTemplateGroupFormat(this));
+    addObject(new JsonObjectTemplateFormat(this));
 }
 
 
@@ -128,7 +128,6 @@ bool JsonMapFormat::write(const Tiled::Map *map, const QString &fileName)
     if (mSubFormat == JavaScript) {
         out << ");";
     }
-    out.flush();
 
     if (file.error() != QFileDevice::NoError) {
         mError = tr("Error while writing file:\n%1").arg(file.errorString());
@@ -289,7 +288,6 @@ bool JsonTilesetFormat::write(const Tiled::Tileset &tileset,
 
     QTextStream out(file.device());
     out << writer.result();
-    out.flush();
 
     if (file.error() != QFileDevice::NoError) {
         mError = tr("Error while writing file:\n%1").arg(file.errorString());
@@ -319,12 +317,12 @@ QString JsonTilesetFormat::errorString() const
     return mError;
 }
 
-JsonTemplateGroupFormat::JsonTemplateGroupFormat(QObject *parent)
+JsonObjectTemplateFormat::JsonObjectTemplateFormat(QObject *parent)
     : Tiled::ObjectTemplateFormat(parent)
 {
 }
 
-Tiled::ObjectTemplate *JsonTemplateGroupFormat::read(const QString &fileName)
+Tiled::ObjectTemplate *JsonObjectTemplateFormat::read(const QString &fileName)
 {
     QFile file(fileName);
 
@@ -333,17 +331,15 @@ Tiled::ObjectTemplate *JsonTemplateGroupFormat::read(const QString &fileName)
         return nullptr;
     }
 
-    JsonReader reader;
-    QByteArray contents = file.readAll();
+    QJsonParseError error;
+    QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &error);
 
-    reader.parse(contents);
-
-    const QVariant variant = reader.result();
-
-    if (!variant.isValid()) {
-        mError = tr("Error parsing file.");
+    if (error.error != QJsonParseError::NoError) {
+        mError = tr("Error parsing file: %1").arg(error.errorString());
         return nullptr;
     }
+
+    const QVariantMap variant = document.object().toVariantMap();
 
     Tiled::VariantToMapConverter converter;
     Tiled::ObjectTemplate *templateGroup = converter.toObjectTemplate(variant,
@@ -357,7 +353,7 @@ Tiled::ObjectTemplate *JsonTemplateGroupFormat::read(const QString &fileName)
     return templateGroup;
 }
 
-bool JsonTemplateGroupFormat::supportsFile(const QString &fileName) const
+bool JsonObjectTemplateFormat::supportsFile(const QString &fileName) const
 {
     if (fileName.endsWith(QLatin1String(".json"), Qt::CaseInsensitive)) {
         QFile file(fileName);
@@ -373,7 +369,7 @@ bool JsonTemplateGroupFormat::supportsFile(const QString &fileName) const
     return false;
 }
 
-bool JsonTemplateGroupFormat::write(const Tiled::ObjectTemplate *objectTemplate, const QString &fileName)
+bool JsonObjectTemplateFormat::write(const Tiled::ObjectTemplate *objectTemplate, const QString &fileName)
 {
     Tiled::SaveFile file(fileName);
 
@@ -383,20 +379,12 @@ bool JsonTemplateGroupFormat::write(const Tiled::ObjectTemplate *objectTemplate,
     }
 
     Tiled::MapToVariantConverter converter;
-    QVariant variant = converter.toVariant(*objectTemplate, QFileInfo(fileName).dir());
+    QVariantMap variant = converter.toVariant(*objectTemplate, QFileInfo(fileName).dir());
 
-    JsonWriter writer;
-    writer.setAutoFormatting(true);
+    QJsonDocument document(QJsonObject::fromVariantMap(variant));
+    QByteArray json = document.toJson(QJsonDocument::Indented);
 
-    if (!writer.stringify(variant)) {
-        // This can only happen due to coding error
-        mError = writer.errorString();
-        return false;
-    }
-
-    QTextStream out(file.device());
-    out << writer.result();
-    out.flush();
+    file.device()->write(json);
 
     if (file.error() != QFileDevice::NoError) {
         mError = tr("Error while writing file:\n%1").arg(file.errorString());
@@ -411,17 +399,17 @@ bool JsonTemplateGroupFormat::write(const Tiled::ObjectTemplate *objectTemplate,
     return true;
 }
 
-QString JsonTemplateGroupFormat::nameFilter() const
+QString JsonObjectTemplateFormat::nameFilter() const
 {
-    return tr("Json template group files (*.json)");
+    return tr("Json template files (*.json)");
 }
 
-QString JsonTemplateGroupFormat::shortName() const
+QString JsonObjectTemplateFormat::shortName() const
 {
     return QLatin1String("json");
 }
 
-QString JsonTemplateGroupFormat::errorString() const
+QString JsonObjectTemplateFormat::errorString() const
 {
     return mError;
 }

@@ -52,4 +52,9 @@ private:
     static TemplateManager *mInstance;
 };
 
+inline ObjectTemplate *TemplateManager::findObjectTemplate(const QString &fileName)
+{
+    return mObjectTemplates.value(fileName);
+}
+
 } // namespace Tiled::Internal

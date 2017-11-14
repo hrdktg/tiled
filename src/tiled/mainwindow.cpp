@@ -53,7 +53,6 @@
 #include "newtilesetdialog.h"
 #include "objectgroup.h"
 #include "objecttypeseditor.h"
-#include "objecttemplatemodel.h"
 #include "offsetmapdialog.h"
 #include "patreondialog.h"
 #include "pluginmanager.h"

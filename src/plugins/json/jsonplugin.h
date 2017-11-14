@@ -96,13 +96,13 @@ protected:
     QString mError;
 };
 
-class JSONSHARED_EXPORT JsonTemplateGroupFormat : public Tiled::ObjectTemplateFormat
+class JSONSHARED_EXPORT JsonObjectTemplateFormat : public Tiled::ObjectTemplateFormat
 {
     Q_OBJECT
     Q_INTERFACES(Tiled::ObjectTemplateFormat)
 
 public:
-    JsonTemplateGroupFormat(QObject *parent = nullptr);
+    JsonObjectTemplateFormat(QObject *parent = nullptr);
 
     Tiled::ObjectTemplate *read(const QString &fileName) override;
     bool supportsFile(const QString &fileName) const override;

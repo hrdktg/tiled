@@ -33,7 +33,7 @@ ReplaceTemplate::ReplaceTemplate(MapDocument *mapDocument,
                                  const ObjectTemplate *oldObjectTemplate,
                                  const ObjectTemplate *newObjectTemplate)
     : QUndoCommand(QCoreApplication::translate("Undo Commands",
-                                               "Replace Template Group"))
+                                               "Replace Template"))
     , mMapDocument(mapDocument)
     , mOldObjectTemplate(oldObjectTemplate)
     , mNewObjectTemplate(newObjectTemplate)

@@ -30,9 +30,9 @@
 #include "mapscene.h"
 #include "newtemplatedialog.h"
 #include "objectgroup.h"
-#include "objecttemplatemodel.h"
 #include "raiselowerhelper.h"
 #include "resizemapobject.h"
+#include "templatemanager.h"
 #include "tile.h"
 #include "utils.h"
 
@@ -207,7 +207,16 @@ void AbstractObjectTool::resetTileSize()
 void AbstractObjectTool::saveSelectedObject()
 {
     auto object = mapDocument()->selectedObjects().first();
-    saveObjectTemplate(object);
+    QString fileName = saveObjectTemplate(object);
+    if (fileName.isEmpty())
+        return;
+
+    if (ObjectTemplate *objectTemplate = TemplateManager::instance()->loadObjectTemplate(fileName)) {
+        // Convert the saved object into an instance and clear the changed properties flags
+        object->setObjectTemplate(objectTemplate);
+        object->setChangedProperties(0);
+        emit mapDocument()->objectsChanged(mapDocument()->selectedObjects());
+    }
 }
 
 void AbstractObjectTool::detachSelectedObjects()

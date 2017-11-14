@@ -39,6 +39,7 @@
 #include "mapobject.h"
 #include "movemapobject.h"
 #include "objectgroup.h"
+#include "objecttemplate.h"
 #include "preferences.h"
 #include "replacetileset.h"
 #include "resizemapobject.h"
@@ -648,7 +649,7 @@ void PropertyBrowser::addMapObjectProperties()
     QtProperty *groupProperty = mGroupManager->addProperty(tr("Object"));
 
     addProperty(IdProperty, QVariant::Int, tr("ID"), groupProperty)->setEnabled(false);
-    addProperty(TemplateInstanceProperty, QVariant::Bool, tr("Template Instance"), groupProperty)->setEnabled(false);
+    addProperty(TemplateProperty, filePathTypeId(), tr("Template"), groupProperty)->setEnabled(false);
     addProperty(NameProperty, QVariant::String, tr("Name"), groupProperty);
 
     QtVariantProperty *typeProperty =
@@ -1563,8 +1564,12 @@ void PropertyBrowser::updateProperties()
         const auto typeColorGroup = mapObject->type().isEmpty() ? QPalette::Disabled
                                                                 : QPalette::Active;
 
+        FilePath templateFilePath;
+        if (auto objectTemplate = mapObject->objectTemplate())
+            templateFilePath.url = QUrl::fromLocalFile(objectTemplate->fileName());
+
         mIdToProperty[IdProperty]->setValue(mapObject->id());
-        mIdToProperty[TemplateInstanceProperty]->setValue(mapObject->isTemplateInstance());
+        mIdToProperty[TemplateProperty]->setValue(QVariant::fromValue(templateFilePath));
         mIdToProperty[NameProperty]->setValue(mapObject->name());
         mIdToProperty[TypeProperty]->setValue(type);
         mIdToProperty[TypeProperty]->setValueColor(palette().color(typeColorGroup, QPalette::WindowText));

@@ -21,13 +21,15 @@
 
 #pragma once
 
+#include <QString>
+
 namespace Tiled {
 
 class MapObject;
 
 namespace Internal {
 
-void saveObjectTemplate(const MapObject *mapObject);
+QString saveObjectTemplate(const MapObject *mapObject);
 
 } // namespace Internal
 } // namespace Tiled

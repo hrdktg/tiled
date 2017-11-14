@@ -25,7 +25,6 @@
 #include "map.h"
 #include "mapdocument.h"
 #include "objectgroup.h"
-#include "objecttemplatemodel.h"
 #include "preferences.h"
 #include "replacetemplate.h"
 #include "replacetileset.h"
@@ -619,7 +618,7 @@ void BrokenLinksWidget::tryFixLink(const BrokenLink &link)
         const QString allFilesFilter = tr("All Files (*)");
 
         Preferences *prefs = Preferences::instance();
-        QString start = prefs->lastPath(Preferences::TemplateDocumentsFile);
+        QString start = prefs->lastPath(Preferences::ObjectTemplateFile);
 
         QString fileName = QFileDialog::getOpenFileName(this, tr("Locate Object Template"),
                                                         start,

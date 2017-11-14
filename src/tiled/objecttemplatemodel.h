@@ -21,60 +21,30 @@
 
 #pragma once
 
-#include "objecttemplatedocument.h"
-
-#include <QAbstractItemModel>
+#include <QFileSystemModel>
 
 namespace Tiled {
 
-class MapObject;
+class ObjectTemplate;
 
 namespace Internal {
 
-#if 0
-
-class ObjectTemplateModel : public QAbstractItemModel
+class ObjectTemplateModel : public QFileSystemModel
 {
     Q_OBJECT
 
 public:
-    static ObjectTemplateModel *instance();
-    static void deleteInstance();
+    ObjectTemplateModel(QObject *parent = nullptr);
+    ~ObjectTemplateModel();
 
-    const TemplateDocuments &templateDocuments() const;
-    void setTemplateDocuments(const TemplateDocuments &templateDocuments);
-
-    QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override;
-    QModelIndex parent(const QModelIndex &index) const override;
-
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-
-    bool addNewDocument(ObjectTemplateDocument *document);
-    bool addDocument(ObjectTemplateDocument *document);
-    ObjectTemplate *saveObjectToDocument(MapObject *object, QString name, int documentIndex);
     ObjectTemplate *toObjectTemplate(const QModelIndex &index) const;
-    void save(const ObjectTemplate *objectTemplate) const;
 
     Qt::ItemFlags flags(const QModelIndex &index) const override;
     QStringList mimeTypes() const override;
     QMimeData *mimeData(const QModelIndexList &indexes) const override;
-
-private:
-    ObjectTemplateModel(QObject *parent = nullptr);
-    ~ObjectTemplateModel();
-
-    static ObjectTemplateModel *mInstance;
-
-    TemplateDocuments mTemplateDocuments;
 };
-
-inline const TemplateDocuments &ObjectTemplateModel::templateDocuments() const
-{ return mTemplateDocuments; }
-
-#endif
 
 } // namespace Internal
 } // namespace Tiled

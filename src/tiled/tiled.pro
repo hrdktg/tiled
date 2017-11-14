@@ -215,7 +215,6 @@ SOURCES += aboutdialog.cpp \
     standardautoupdater.cpp \
     stylehelper.cpp \
     swaptiles.cpp \
-    templategroupdocument.cpp \
     templatesdock.cpp \
     terrainbrush.cpp \
     terraindock.cpp \
@@ -415,7 +414,6 @@ HEADERS += aboutdialog.h \
     standardautoupdater.h \
     stylehelper.h \
     swaptiles.h \
-    templategroupdocument.h \
     templatesdock.h \
     terrainbrush.h \
     terraindock.h \
@@ -471,7 +469,6 @@ FORMS += aboutdialog.ui \
     imagecolorpickerwidget.ui \
     mainwindow.ui \
     newmapdialog.ui \
-    newtemplatedialog.ui \
     newtilesetdialog.ui \
     noeditorwidget.ui \
     objecttypeseditor.ui \

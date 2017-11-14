@@ -47,11 +47,6 @@ void TemplateManager::deleteInstance()
     mInstance = nullptr;
 }
 
-ObjectTemplate *TemplateManager::findObjectTemplate(const QString &fileName)
-{
-    return mObjectTemplates.value(fileName);
-}
-
 ObjectTemplate *TemplateManager::loadObjectTemplate(const QString &fileName, QString *error)
 {
     ObjectTemplate *objectTemplate = findObjectTemplate(fileName);

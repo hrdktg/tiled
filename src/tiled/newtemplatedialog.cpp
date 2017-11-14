@@ -20,7 +20,6 @@
  */
 
 #include "newtemplatedialog.h"
-#include "objecttemplatemodel.h"
 #include "preferences.h"
 #include "templatemanager.h"
 #include "tmxmapformat.h"
@@ -33,16 +32,19 @@
 namespace Tiled {
 namespace Internal {
 
-void saveObjectTemplate(const MapObject *mapObject)
+QString saveObjectTemplate(const MapObject *mapObject)
 {
     FormatHelper<ObjectTemplateFormat> helper(FileFormat::ReadWrite);
     QString filter = helper.filter();
     QString selectedFilter = XmlObjectTemplateFormat().nameFilter();
 
     Preferences *prefs = Preferences::instance();
-    QString suggestedFileName = prefs->lastPath(Preferences::TemplateDocumentsFile);
-    // todo: base suggested file name on the name of the object, when non-empty
-    suggestedFileName += QCoreApplication::translate("Tiled::Internal::MainWindow", "untitled");
+    QString suggestedFileName = prefs->lastPath(Preferences::ObjectTemplateFile);
+    suggestedFileName += QLatin1Char('/');
+    if (!mapObject->name().isEmpty())
+        suggestedFileName += mapObject->name();
+    else
+        suggestedFileName += QCoreApplication::translate("Tiled::Internal::MainWindow", "untitled");
     suggestedFileName += QLatin1String(".tx");
 
     QString fileName = QFileDialog::getSaveFileName(nullptr, QCoreApplication::translate("Tiled::Internal::MainWindow", "Save Template"),
@@ -51,28 +53,23 @@ void saveObjectTemplate(const MapObject *mapObject)
                                                     &selectedFilter);
 
     if (fileName.isEmpty())
-        return;
+        return QString();
 
     ObjectTemplateFormat *format = helper.formatByNameFilter(selectedFilter);
 
-    QScopedPointer<ObjectTemplate> objectTemplate(new ObjectTemplate(fileName));
-    objectTemplate->setFormat(format);
-    objectTemplate->setObject(mapObject);
+    ObjectTemplate objectTemplate;
+    objectTemplate.setObject(mapObject);
 
-    QScopedPointer<ObjectTemplateDocument>
-        objectTemplateDocument(new ObjectTemplateDocument(objectTemplate.data()));
-
-    QString error;
-    if (!objectTemplateDocument->save(fileName, &error)) {
-        QMessageBox::critical(nullptr, QCoreApplication::translate("Tiled::Internal::MainWindow", "Error Saving Template"), error);
-        return;
+    if (!format->write(&objectTemplate, fileName)) {
+        QMessageBox::critical(nullptr, QCoreApplication::translate("Tiled::Internal::MainWindow", "Error Saving Template"),
+                              format->errorString());
+        return QString();
     }
 
-//    auto model = ObjectTemplateModel::instance();
-//    model->addNewDocument(ObjectTemplateDocument.take());
-
-    prefs->setLastPath(Preferences::TemplateDocumentsFile,
+    prefs->setLastPath(Preferences::ObjectTemplateFile,
                        QFileInfo(fileName).path());
+
+    return fileName;
 }
 
 } // namespace Internal

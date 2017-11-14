@@ -84,7 +84,6 @@ public:
     ~MapDocument();
 
     bool save(const QString &fileName, QString *error = nullptr) override;
-    void saveSelectedObject(const QString &name);
 
     /**
      * Loads a map and returns a MapDocument instance on success. Returns null
@@ -313,8 +312,8 @@ private slots:
     void onLayerRemoved(Layer *layer);
 
 public slots:
-    void updateTemplateInstances(const MapObject *mapObject);
-    void selectAllInstances(const MapObject *mapObject);
+    void updateTemplateInstances(const ObjectTemplate *objectTemplate);
+    void selectAllInstances(const ObjectTemplate *objectTemplate);
 
 private:
     void deselectObjects(const QList<MapObject*> &objects);

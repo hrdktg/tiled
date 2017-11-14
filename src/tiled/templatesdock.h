@@ -25,8 +25,6 @@
 #include <QTreeView>
 #include <QAction>
 
-class QAbstractProxyModel;
-
 namespace Tiled {
 
 class ObjectTemplate;
@@ -56,16 +54,18 @@ public:
 
 signals:
     void currentTemplateChanged(ObjectTemplate *objectTemplate);
-    void templateEdited(const MapObject *mapObject);
+    void templateEdited(const ObjectTemplate *objectTemplate);
     void setTile(Tile *tile);
 
 private slots:
-    void setSelectedTool(AbstractTool*tool);
+    void setSelectedTool(AbstractTool *tool);
     void setTemplate(ObjectTemplate *objectTemplate);
 
     void undo();
     void redo();
     void applyChanges();
+
+    void chooseDirectory();
 
 protected:
     void focusInEvent(QFocusEvent *event) override;
@@ -76,8 +76,7 @@ private:
 
     TemplatesView *mTemplatesView;
 
-//    QAction *mNewTemplateGroup;
-//    QAction *mOpenTemplateGroup;
+    QAction *mChooseDirectory;
     QAction *mUndoAction;
     QAction *mRedoAction;
 
@@ -107,12 +106,12 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
 
 public slots:
-    void updateSelection(const QItemSelection &selected, const QItemSelection &deselected);
-    void selectAllInstances();
+    void onCurrentChanged(const QModelIndex &index);
 
 private:
-    QAction *mActionSelectAllInstances;
-    ObjectTemplate *mObjectTemplate;
+    void onTemplatesDirectoryChanged(const QString &templatesDirectory);
+
+    ObjectTemplateModel *mModel;
 };
 
 inline void TemplatesDock::setPropertiesDock(PropertiesDock *propertiesDock)

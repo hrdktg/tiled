@@ -44,7 +44,6 @@
 #include "movemapobject.h"
 #include "movemapobjecttogroup.h"
 #include "objectgroup.h"
-#include "objecttemplatemodel.h"
 #include "offsetlayer.h"
 #include "orthogonalrenderer.h"
 #include "painttilelayer.h"
@@ -124,22 +123,6 @@ MapDocument::~MapDocument()
 
     delete mRenderer;
     delete mMap;
-}
-
-void MapDocument::saveSelectedObject(const QString &name)
-{
-    if (mSelectedObjects.size() != 1)
-        return;
-
-//    ObjectTemplateModel* model = ObjectTemplateModel::instance();
-//    MapObject *object = mSelectedObjects.first();
-
-//    if (ObjectTemplate *objectTemplate = model->saveObjectToDocument(object, name)) {
-//        // Convert the saved object into an instance and clear the changed properties flags
-//        object->setObjectTemplate(objectTemplate);
-//        object->setChangedProperties(0);
-//        emit objectsChanged(mSelectedObjects);
-//    }
 }
 
 bool MapDocument::save(const QString &fileName, QString *error)
@@ -929,12 +912,12 @@ void MapDocument::onLayerRemoved(Layer *layer)
     emit layerRemoved(layer);
 }
 
-void MapDocument::updateTemplateInstances(const MapObject *mapObject)
+void MapDocument::updateTemplateInstances(const ObjectTemplate *objectTemplate)
 {
     QList<MapObject*> objectList;
     for (ObjectGroup *group : mMap->objectGroups()) {
         for (auto object : group->objects()) {
-            if (object->isTemplateInstance() && object->templateObject() == mapObject) {
+            if (object->objectTemplate() == objectTemplate) {
                 object->syncWithTemplate();
                 objectList.append(object);
             }
@@ -943,16 +926,13 @@ void MapDocument::updateTemplateInstances(const MapObject *mapObject)
     emit objectsChanged(objectList);
 }
 
-void MapDocument::selectAllInstances(const MapObject *mapObject)
+void MapDocument::selectAllInstances(const ObjectTemplate *objectTemplate)
 {
     QList<MapObject*> objectList;
-    for (ObjectGroup *group : mMap->objectGroups()) {
-        for (auto object : group->objects()) {
-            if (object->isTemplateInstance() && object->templateObject() == mapObject) {
+    for (ObjectGroup *group : mMap->objectGroups())
+        for (auto object : group->objects())
+            if (object->objectTemplate() == objectTemplate)
                 objectList.append(object);
-            }
-        }
-    }
     setSelectedObjects(objectList);
 }
 
